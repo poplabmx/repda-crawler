@@ -1,25 +1,12 @@
-import playwright
-from playwright.sync_api import Playwright, sync_playwright, expect
+from playwright.sync_api import sync_playwright
 
+from routines import extract_title_details, get_repda, go_to_title_details
 
-def run(playwright: Playwright) -> None:
-    browser = playwright.chromium.launch(headless=False)
-    context = browser.new_context()
-    # Open new page
-    page = context.new_page()
-    page.goto("https://app.conagua.gob.mx/consultarepda.aspx")
-    page.get_by_role("textbox", name="Debes ingresar el número completo del título de concesión/asignación/permiso para realizar una búsqueda válida, este filtro no se combina con el nombre del titular.").click()
-    page.get_by_role("textbox", name="Debes ingresar el número completo del título de concesión/asignación/permiso para realizar una búsqueda válida, este filtro no se combina con el nombre del titular.").fill("815222")
-    page.get_by_role("button", name="Buscar").click()
-    columnheader =     page.get_by_role("columnheader", name="Titular")
-    page.wait_for_timeout(15000)
-
-    print(columnheader.text_content())
-
-    # ---------------------
-    context.close()
-    browser.close()
-
+from pprint import pprint
 
 with sync_playwright() as playwright:
-    run(playwright)
+    browser, context, page = get_repda(playwright)
+    go_to_title_details(page, "815222")
+    data = extract_title_details(page, "22/02/2022")
+    pprint(data[0].json())
+    page.wait_for_timeout(15000)
