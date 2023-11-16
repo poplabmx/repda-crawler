@@ -87,7 +87,7 @@ for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
         print("Last batch")
         end = -1
     else:
-        end = (i + 1) + batch_size
+        end = i + batch_size
 
     batch_titles = []
 
@@ -104,7 +104,7 @@ for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
     print("Saving checkpoint")
     # save checkpoint
     checkpoint = {
-        "completed_batchs": i,
+        "completed_batchs": i + batch_size,
         "results": results,
     }
 
@@ -145,9 +145,11 @@ with open("missing_titles.csv", "w") as f:
 
 
 with open("results.json", "w") as f:
+    f.write("[\n")
     for result in results:
         f.write(result.json())
-        f.write("\n")
+        f.write(",\n")
+    f.write("]\n")
 
 print("Results saved")
 print("Crawling completed")
