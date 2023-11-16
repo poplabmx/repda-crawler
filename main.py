@@ -79,11 +79,12 @@ results = checkpoint["results"]
 
 batch_size = 100
 
-for i in range(checkpoint_batch, len(titles_to_extract[:10]), batch_size):
+for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
     print(f"Batch {i / batch_size:0.0f} of {len(titles_to_extract) / batch_size:0.0f}")
 
     start = i
     if i + batch_size > len(titles_to_extract):
+        print("Last batch")
         end = -1
     else:
         end = (i + 1) + batch_size
@@ -122,6 +123,11 @@ for i in range(checkpoint_batch, len(titles_to_extract[:10]), batch_size):
     print("=" * 80)
     print("Getting next batch")
 
+print("All batches completed")
+
+# save results
+
+print("Saving results")
 
 all_titles = set([title["Título"] for title in titles_to_extract])
 crawled_titles = set([result.titulo for result in results])
@@ -142,3 +148,6 @@ with open("results.json", "w") as f:
     for result in results:
         f.write(result.json())
         f.write("\n")
+
+print("Results saved")
+print("Crawling completed")
