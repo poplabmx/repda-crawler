@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 class DataItem(BaseModel):
     # información general
+    num: str
     titular: str
     titulo: str
     fecha: str

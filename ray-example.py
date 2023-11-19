@@ -1,6 +1,6 @@
 import ray
+import time
 
-from playwright.sync_api import Playwright, sync_playwright, expect
 
 ray.init(
     num_cpus=4,
@@ -8,54 +8,34 @@ ray.init(
 
 
 @ray.remote
-def run():
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=False)
-        context = browser.new_context()
-        # Open new page
-        page = context.new_page()
-        page.goto("https://app.conagua.gob.mx/consultarepda.aspx")
-        page.get_by_role(
-            "textbox",
-            name="Debes ingresar el número completo del título de concesión/asignación/permiso para realizar una búsqueda válida, este filtro no se combina con el nombre del titular.",
-        ).click()
-        page.get_by_role(
-            "textbox",
-            name="Debes ingresar el número completo del título de concesión/asignación/permiso para realizar una búsqueda válida, este filtro no se combina con el nombre del titular.",
-        ).fill("815222")
-        page.get_by_role("button", name="Buscar").click()
-        columnheader = page.get_by_role("columnheader", name="Titular")
-        text = columnheader.text_content()
-        page.wait_for_timeout(15000)
-        page.goto("https://app.conagua.gob.mx/consultarepda.aspx")
-        page.get_by_role(
-            "textbox",
-            name="Debes ingresar el número completo del título de concesión/asignación/permiso para realizar una búsqueda válida, este filtro no se combina con el nombre del titular.",
-        ).click()
-        page.get_by_role(
-            "textbox",
-            name="Escribe parcial o completamente el nombre del titular (es).",
-        ).click()
-        page.get_by_role(
-            "textbox",
-            name="Escribe parcial o completamente el nombre del titular (es).",
-        ).fill("jorge")
-        page.get_by_role("button", name="Buscar").click()
-        page.get_by_role("cell", name="822381").click()
-        page.get_by_text("Subterráneos", exact=True).click()
+def tardo_5_segundos(name: str, actorRef: Actor):
+    time.sleep(5)
+    actorRef.inc.remote()
+    return f"{name} tardo 5 segundos"
 
-        print(columnheader)
 
-        # ---------------------
-        context.close()
-        browser.close()
+@ray.actor
+class Actor:
+    def __init__(self):
+        self.count = 0
 
-        return text
+    def inc(self):
+        self.count += 1
+
+    def log(self):
+        print(self.count)
+    
+
+actor = Actor.remote()
+
+actor.inc.remote()
+
 
 
 results = []
 
 for i in range(4):
-    results.append(run.remote())
+    results.append(tardo_5_segundos.remote("resultado " + str(i), actor))
+
 
 print(ray.get(results))

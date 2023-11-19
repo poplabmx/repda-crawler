@@ -14,7 +14,7 @@ ray.init(
 
 titles_to_extract = []
 
-with open("repda-consulta-basica-guanajuato-nov-2023.csv", newline="") as csvfile:
+with open("missing_titles.csv", newline="") as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         titles_to_extract.append(row)
@@ -66,9 +66,12 @@ checkpoint = {
     "results": [],
 }
 
-if os.path.isfile("checkpoint.pkl"):
-    with open("checkpoint.pkl", "rb") as f:
+checkpont_file = "checkpoint-missing.pkl"
+
+if os.path.isfile(checkpont_file):
+    with open(checkpont_file, "rb") as f:
         checkpoint = pickle.load(f)
+
 
 checkpoint_batch = checkpoint["completed_batchs"]
 
@@ -77,7 +80,7 @@ print(f"Resuming from batch {checkpoint['completed_batchs']}")
 results = checkpoint["results"]
 
 
-batch_size = 100
+batch_size = 10
 
 for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
     print(f"Batch {i / batch_size:0.0f} of {len(titles_to_extract) / batch_size:0.0f}")
@@ -88,8 +91,6 @@ for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
         end = -1
     else:
         end = i + batch_size
-
-    batch_titles = []
 
     batch_tasks = [
         extract.remote(title["Título"], title["Fecha de registro"])
@@ -108,7 +109,7 @@ for i in range(checkpoint_batch, len(titles_to_extract), batch_size):
         "results": results,
     }
 
-    with open("checkpoint.pkl", "wb") as f:
+    with open(checkpont_file, "wb") as f:
         pickle.dump(checkpoint, f)
 
     print("Saving partial results")
@@ -135,7 +136,7 @@ crawled_titles = set([result.titulo for result in results])
 missing_titles = all_titles - crawled_titles
 
 # write missing titles to file
-with open("missing_titles.csv", "w") as f:
+with open("missing_titles2.csv", "w") as f:
     f.write("Título,Fecha de registro\n")
     for title in missing_titles:
         # find the title in the original list
@@ -144,7 +145,7 @@ with open("missing_titles.csv", "w") as f:
                 f.write(f"{row['Título']},{row['Fecha de registro']}\n")
 
 
-with open("results.json", "w") as f:
+with open("results2.json", "w") as f:
     f.write("[\n")
     for result in results:
         f.write(result.json())
